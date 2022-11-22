@@ -1,3 +1,3 @@
-open module ChatWS.Common.main {
+open module de.medieninformatik.common {
     exports de.medieninformatik.common;
 }

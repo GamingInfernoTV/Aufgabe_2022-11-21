@@ -20,5 +20,7 @@ javafx {
 }
 
 dependencies {
+    implementation "org.apache.tomcat.embed:tomcat-embed-jasper:${tomcatVersion}"
+    implementation "org.apache.tomcat.embed:tomcat-embed-websocket:${tomcatVersion}"
     implementation project(':Common')
 }

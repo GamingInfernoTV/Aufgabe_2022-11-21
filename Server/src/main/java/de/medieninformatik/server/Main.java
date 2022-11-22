@@ -3,10 +3,10 @@ package de.medieninformatik.server;
 
 import org.apache.catalina.LifecycleException;
 
-import java.net.UnknownHostException;
+import java.io.IOException;
 
 public class Main {
-    public static void main(String[] args) throws LifecycleException, UnknownHostException {
-        Server.start(8080);
+    public static void main(String[] args) throws LifecycleException, IOException {
+        Server.start();
     }
 }

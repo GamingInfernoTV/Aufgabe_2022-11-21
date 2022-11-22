@@ -6,18 +6,20 @@ import org.apache.catalina.Service;
 import org.apache.catalina.connector.Connector;
 import org.apache.catalina.startup.Tomcat;
 
+import java.io.IOException;
 import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Server {
+    private static final int PORT = 8080;
+
     private Server() {
     }
 
-    static void start(final int port) throws LifecycleException, UnknownHostException {
+    static void start() throws LifecycleException, IOException {
         String webapps = "Chat";
         String doc = "web";
 
@@ -30,22 +32,19 @@ public class Server {
         Context ctx = tomcat.addWebapp(webapps, docBase.toString());
 
         Connector con = new Connector();
-        con.setPort(port);
+        con.setPort(PORT);
 
         Service service = tomcat.getService();
         service.addConnector(con);
 
         tomcat.start();
-        System.out.printf("Docbase: %s%n", ctx.getDocBase());
+        System.out.printf("Doc-base: %s%n", ctx.getDocBase());
         String url = con.getScheme() + "://" +
                 InetAddress.getLocalHost().getHostAddress() + ":" +
                 con.getPort() + ctx.getPath();
         System.out.printf("URL: %s%n", url);
 
-        //Thread t = new Thread(Nachricht.quelle());
-        //t.start();
-        javax.swing.JOptionPane.showMessageDialog(null, "Server beenden!");
-        //t.interrupt();
+        var ignored = System.in.read();
         tomcat.stop();
         tomcat.destroy();
     }
