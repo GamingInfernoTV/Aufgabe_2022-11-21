@@ -1,0 +1,5 @@
+rootProject.name = 'Aufgabe_2022-11-21'
+include 'Common'
+include 'Server'
+include 'Client'
+
