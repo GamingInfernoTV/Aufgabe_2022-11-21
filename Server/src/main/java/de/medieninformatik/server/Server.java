@@ -44,7 +44,9 @@ public class Server {
                 con.getPort() + ctx.getPath();
         System.out.printf("URL: %s%n", url);
 
-        var ignored = System.in.read();
+        // noinspection ResultOfMethodCallIgnored
+        System.in.read();
+
         tomcat.stop();
         tomcat.destroy();
     }

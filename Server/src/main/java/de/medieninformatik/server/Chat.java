@@ -39,7 +39,7 @@ public class Chat {
                 try {
                     s.close();
                 } catch (IOException ex) {
-                    throw new RuntimeException(ex);
+                    e.printStackTrace(System.err);
                 }
             }
         });

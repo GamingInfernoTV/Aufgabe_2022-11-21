@@ -6,6 +6,7 @@ import jakarta.websocket.*;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Queue;
 import java.util.concurrent.SynchronousQueue;
 
 @jakarta.websocket.ClientEndpoint
@@ -15,8 +16,10 @@ public class ClientEndpoint {
     private final WebSocketContainer container = ContainerProvider.getWebSocketContainer();
     private Session userSession;
 
-    public ClientEndpoint(SynchronousQueue<Message> incomingMessage, Runnable onCloseAction) {
-        this.incomingMessage = incomingMessage;
+    public ClientEndpoint(Queue<Message> incomingMessage, Runnable onCloseAction) {
+        if (incomingMessage instanceof SynchronousQueue<Message> synchronousQueue)
+            this.incomingMessage = synchronousQueue;
+        else throw new IllegalArgumentException("queue must be of type SynchronousQueue");
         this.onCloseAction = onCloseAction;
     }
 
@@ -43,7 +46,7 @@ public class ClientEndpoint {
             try {
                 userSession.close();
             } catch (IOException ex) {
-                throw new RuntimeException(ex);
+                e.printStackTrace(System.err);
             } finally {
                 userSession = null;
             }
@@ -57,7 +60,18 @@ public class ClientEndpoint {
 
     @OnMessage
     public void onMessage(Session session, String msg) {
-        incomingMessage.offer(Message.getFromString(msg));
+        try {
+            incomingMessage.put(Message.getFromString(msg));
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            try {
+                userSession.close();
+            } catch (IOException ex) {
+                e.printStackTrace(System.err);
+            } finally {
+                userSession = null;
+            }
+        }
     }
 
     @OnClose

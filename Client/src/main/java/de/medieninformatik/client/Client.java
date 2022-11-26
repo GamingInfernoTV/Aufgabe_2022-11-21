@@ -58,12 +58,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * </span>
  */
 public class Client extends Application {
-    private final int HEIGHT = 500;
-    private final int WIDTH = 800;
-    private final int FONT_SIZE = 14;
-    private final String FONT = " -fx-font: " + FONT_SIZE + "pt \"Arial\";";
-    private final String BG_GRAY = " -fx-background-color: lightgray;";
-    private final String BG_RED = " -fx-background-color: red;";
+    private static final int HEIGHT = 500;
+    private static final int WIDTH = 800;
+    private static final int FONT_SIZE = 14;
+    private static final String FONT = " -fx-font: " + FONT_SIZE + "pt \"Arial\";";
+    private static final String BG_GRAY = " -fx-background-color: lightgray;";
+    private static final String BG_RED = " -fx-background-color: red;";
     private String host;
     private int port;
     private Stage stage;
@@ -78,55 +78,6 @@ public class Client extends Application {
     private BlockingQueue<Message> messages;
     private SynchronousQueue<Message> incomingMessage;
     private ClientEndpoint clientEndpoint;
-
-    /**
-     * Die vom Service ausgeführte Task.
-     * Sie nimmt vom Server Nachrichten entgegen,
-     * gibt diese aus und reagiert gegebenenfalls.
-     * <p>
-     * Falls eine LEAVE-Nachricht des Nutzers eintrifft,
-     * wird die Task und damit der Service beendet.
-     */
-    private class ChatTask extends Task<Void> {
-        @Override
-        protected Void call() throws Exception {
-            semaphore.acquire(); // Verhindert zu frühen cleanup
-            while (isLoggedIn.get()) {
-                Message msg = incomingMessage.take();
-                Message.Action action = msg.action();
-                final String ausgabe = switch (action) {
-                    case JOIN -> String.format(">>> %s ist angemeldet%n", msg.user());
-                    case SEND -> String.format("%s: %s%n", msg.user(), msg.content());
-                    case LEAVE -> String.format("<<< %s ist abgemeldet%n", msg.user());
-                };
-                Platform.runLater(() -> verlauf.appendText(ausgabe));
-                if (action == Message.Action.LEAVE && user.equals(msg.user())) {
-                    isLoggedIn.set(false);
-                }
-            }
-            semaphore.release();
-            return null;
-        }
-    }
-
-    /**
-     * Wartet auf Nachricht in Warteschlange.
-     * Diese Nachricht wird dann an den Server gesendet.
-     * LEAVE-Nachricht oder isLoggedIn == false beendet die Task
-     */
-    private class SendTask extends Task<Void> {
-        @Override
-        protected Void call() throws Exception {
-            while (isLoggedIn.get()) {
-                Message msg = messages.take(); // Blockiert
-                clientEndpoint.sendMessage(msg);
-                if (msg.action() == Message.Action.LEAVE) {
-                    break;
-                }
-            }
-            return null;
-        }
-    }
 
     /**
      * Bereitet JavaFX vor (ohne GUI-Elemente).
@@ -165,8 +116,8 @@ public class Client extends Application {
         verlauf.setWrapText(true);
         verlauf.setStyle(FONT);
         verlauf.setEditable(false);
-        verlauf.setPrefHeight(HEIGHT - 6 * FONT_SIZE);
-        verlauf.setPrefWidth(WIDTH - 20);
+        verlauf.setPrefHeight(HEIGHT - 6d * FONT_SIZE);
+        verlauf.setPrefWidth(WIDTH - 20d);
 
         loginButton = new Button("Anmelden");
         loginButton.setStyle(FONT + BG_GRAY);
@@ -190,7 +141,6 @@ public class Client extends Application {
         });
         stage.show();
     }
-
 
     /**
      * Button dient sowohl zum login als auch zum logout.
@@ -239,9 +189,7 @@ public class Client extends Application {
             loginButton.setText("Abmelden");
             loginButton.setStyle(FONT + BG_RED);
 
-            messages.offer(
-                    new Message(Message.Action.JOIN, user)
-            );
+            offerMessage(new Message(Message.Action.JOIN, user));
             stage.setTitle("ChatClient -- " + user);
         } finally {
             eingabeZeile.setText("");
@@ -254,9 +202,7 @@ public class Client extends Application {
      */
     private void logout() {
         if (isLoggedIn.get()) {
-            messages.offer(
-                    new Message(Message.Action.LEAVE, user)
-            );
+            offerMessage(new Message(Message.Action.LEAVE, user));
             loginButton.setText("Anmelden");
             loginButton.setStyle(FONT + BG_GRAY);
         }
@@ -266,6 +212,7 @@ public class Client extends Application {
         try {
             semaphore.acquire(); // warte bis ChatTask logout von Server hat
         } catch (InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
             interrupted.printStackTrace(System.err);
         }
         clientEndpoint.disconnect();
@@ -304,11 +251,58 @@ public class Client extends Application {
                     ButtonType.OK
             ).show();
         } else {
-            messages.offer(
-                    new Message(Message.Action.SEND, user, input)
-            );
+            offerMessage(new Message(Message.Action.SEND, user, input));
             eingabeZeile.setText("");
             eingabeZeile.requestFocus();
         }
+    }
+
+    /**
+     * Die vom Service ausgeführte Task.
+     * Sie nimmt vom Server Nachrichten entgegen,
+     * gibt diese aus und reagiert gegebenenfalls.
+     * <p>
+     * Falls eine LEAVE-Nachricht des Nutzers eintrifft,
+     * wird die Task und damit der Service beendet.
+     */
+    private class ChatTask extends Task<Void> {
+        @Override
+        protected Void call() throws Exception {
+            semaphore.acquire(); // Verhindert zu frühen cleanup
+            while (isLoggedIn.get()) {
+                Message msg = incomingMessage.take();
+                Message.Action action = msg.action();
+                final String ausgabe = switch (action) {
+                    case JOIN -> String.format(">>> %s ist angemeldet%n", msg.user());
+                    case SEND -> String.format("%s: %s%n", msg.user(), msg.content());
+                    case LEAVE -> String.format("<<< %s ist abgemeldet%n", msg.user());
+                };
+                Platform.runLater(() -> verlauf.appendText(ausgabe));
+                if (action == Message.Action.LEAVE && user.equals(msg.user())) isLoggedIn.set(false);
+            }
+            semaphore.release();
+            return null;
+        }
+    }
+
+    /**
+     * Wartet auf Nachricht in Warteschlange.
+     * Diese Nachricht wird dann an den Server gesendet.
+     * LEAVE-Nachricht oder isLoggedIn == false beendet die Task
+     */
+    private class SendTask extends Task<Void> {
+        @Override
+        protected Void call() throws Exception {
+            while (isLoggedIn.get()) {
+                Message msg = messages.take(); // Blockiert
+                clientEndpoint.sendMessage(msg);
+                if (msg.action() == Message.Action.LEAVE) break;
+            }
+            return null;
+        }
+    }
+
+    private void offerMessage(Message message) {
+        if (!messages.offer(message)) System.err.println("Message could not have been send");
     }
 }
