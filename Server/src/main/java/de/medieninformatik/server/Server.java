@@ -19,6 +19,13 @@ public class Server {
     private Server() {
     }
 
+    /**
+     * Startet den Server auf dem vorher definierten Port.
+     * Zudem wird eine URL des Servers erstellt.
+     *
+     * @throws LifecycleException Exception
+     * @throws IOException Exception
+     */
     static void start() throws LifecycleException, IOException {
         String webapps = "Chat";
         String doc = "web";

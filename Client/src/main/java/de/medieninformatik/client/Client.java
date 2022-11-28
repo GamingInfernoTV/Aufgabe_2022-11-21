@@ -27,7 +27,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author Malte Kasolowsky <code>m30114</code>
  * @author Aaron Pöhlmann <code>m30115</code>
  * @version 2.0 <span>
- * // TODO: Beschreibung hier einfügen
+ * <b>Version 2.0</b></br>
+ * Wie in der vorherigen Version stellt der Client den Chat zur Verfügung.
+ * Es wurden jedoch veränderungen an der Funktionsweise einzelner
+ * Methoden vorgenommen.
+ * Zudem wurden mehrere Funktionen auf einzelne Methoden und Klassen aufgeteilt.
+ * Weiterhin können mehrere Clients gleichzeitig laufen.
+ * Allerdings werden jetzt Threads genutzt.
  * </span>
  * <p>
  * <span>
@@ -161,7 +167,7 @@ public class Client extends Application {
     }
 
     /**
-     * Melde Benutzer an.
+     * Melde Benutzer auf dem Server an.
      */
     private void login() {
         try {
@@ -198,7 +204,7 @@ public class Client extends Application {
     }
 
     /**
-     * Melde Nutzer ab
+     * Melde Nutzer vom Server ab
      */
     private void logout() {
         if (isLoggedIn.get()) {
@@ -208,6 +214,10 @@ public class Client extends Application {
         }
     }
 
+    /**
+     * Bereinigt die Nachrichten des Clients
+     * @param e ignoriert
+     */
     private void cleanup(WorkerStateEvent e) {
         try {
             semaphore.acquire(); // warte bis ChatTask logout von Server hat
@@ -263,7 +273,7 @@ public class Client extends Application {
      * gibt diese aus und reagiert gegebenenfalls.
      * <p>
      * Falls eine LEAVE-Nachricht des Nutzers eintrifft,
-     * wird die Task und damit der Service beendet.
+     * wird die Tasks und damit der Service beendet.
      */
     private class ChatTask extends Task<Void> {
         @Override
@@ -302,6 +312,12 @@ public class Client extends Application {
         }
     }
 
+    /**
+     * Gibt eine Error-Message aus,
+     * wenn die Nachricht nicht gesendet werden kann
+     *
+     * @param message Message des Clients
+     */
     private void offerMessage(Message message) {
         if (!messages.offer(message)) System.err.println("Message could not have been send");
     }

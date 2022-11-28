@@ -16,6 +16,13 @@ public class ClientEndpoint {
     private final WebSocketContainer container = ContainerProvider.getWebSocketContainer();
     private Session userSession;
 
+    /**
+     *Fügt die einkommende Message einer synchronized Queue hinzu.
+     * Diese ist nötig um eine Thread-Sicherheit zu gewährleisten.
+     *
+     * @param incomingMessage Message die der Queue hinzugefügt werden soll
+     * @param onCloseAction
+     */
     public ClientEndpoint(Queue<Message> incomingMessage, Runnable onCloseAction) {
         if (incomingMessage instanceof SynchronousQueue<Message> synchronousQueue)
             this.incomingMessage = synchronousQueue;
@@ -23,6 +30,11 @@ public class ClientEndpoint {
         this.onCloseAction = onCloseAction;
     }
 
+    /**
+     * Connectet den Client mit dem Server.
+     *
+     * @param uri Server URL
+     */
     void connect(String uri) {
         try {
             userSession = container.connectToServer(this, new URI(uri));
@@ -31,6 +43,9 @@ public class ClientEndpoint {
         }
     }
 
+    /**
+     * Beendet die Verbindung des Clients mit dem Server
+     */
     void disconnect() {
         try {
             userSession.close();
@@ -39,6 +54,13 @@ public class ClientEndpoint {
         }
     }
 
+    /**
+     * Sendet die Message des Clients an den Server.
+     * Sollte dies misslingen wird entweder die Verbindung
+     * mit dem Server geschlossen oder eine Fehlermeldung ausgegeben
+     *
+     * @param message vom User eingegebene Message, die dem Server übergeben werden soll
+     */
     void sendMessage(Message message) {
         try {
             userSession.getBasicRemote().sendText(message.toString());
@@ -53,6 +75,12 @@ public class ClientEndpoint {
         }
     }
 
+    /**
+     * Gibt die Information aus, dass sich ein neuer User mit dem
+     * Server verbunden hat
+     *
+     * @param session nicht genutzt
+     */
     @OnOpen
     public void onOpen(Session session) {
         System.out.println("User connected");
@@ -74,6 +102,11 @@ public class ClientEndpoint {
         }
     }
 
+    /**
+     * Stoppt den Client, wenn das Fenster des Clients geschlossen wird
+     * und gibt aus, dass der User disconnected ist.
+     * @param session nicht genutzt
+     */
     @OnClose
     public void onClose(Session session) {
         System.out.println("User disconnected");
