@@ -17,11 +17,11 @@ public class ClientEndpoint {
     private Session userSession;
 
     /**
-     *Fügt die einkommende Message einer synchronized Queue hinzu.
+     * Fügt die einkommende Message einer {@link SynchronousQueue} hinzu.
      * Diese ist nötig um eine Thread-Sicherheit zu gewährleisten.
      *
-     * @param incomingMessage Message die der Queue hinzugefügt werden soll
-     * @param onCloseAction
+     * @param incomingMessage {@link Message}, die der Queue hinzugefügt werden soll
+     * @param onCloseAction   Ein {@link Runnable}, welches ausgeführt wird, wenn der Client geschlossen wird
      */
     public ClientEndpoint(Queue<Message> incomingMessage, Runnable onCloseAction) {
         if (incomingMessage instanceof SynchronousQueue<Message> synchronousQueue)
@@ -31,7 +31,7 @@ public class ClientEndpoint {
     }
 
     /**
-     * Connectet den Client mit dem Server.
+     * Verbindet den Client mit dem Server.
      *
      * @param uri Server URL
      */
@@ -77,7 +77,7 @@ public class ClientEndpoint {
 
     /**
      * Gibt die Information aus, dass sich ein neuer User mit dem
-     * Server verbunden hat
+     * Server verbunden hat, sobald die Verbindung aufgebaut wurde
      *
      * @param session nicht genutzt
      */
@@ -86,6 +86,12 @@ public class ClientEndpoint {
         System.out.println("User connected");
     }
 
+    /**
+     * Übergibt die eingehende Nachricht der gespeicherten {@link SynchronousQueue}
+     *
+     * @param session nicht benutzt
+     * @param msg     Die vom Server eingehende Methode
+     */
     @OnMessage
     public void onMessage(Session session, String msg) {
         try {
@@ -98,6 +104,7 @@ public class ClientEndpoint {
                 e.printStackTrace(System.err);
             } finally {
                 userSession = null;
+                onCloseAction.run();
             }
         }
     }
@@ -105,6 +112,7 @@ public class ClientEndpoint {
     /**
      * Stoppt den Client, wenn das Fenster des Clients geschlossen wird
      * und gibt aus, dass der User disconnected ist.
+     *
      * @param session nicht genutzt
      */
     @OnClose

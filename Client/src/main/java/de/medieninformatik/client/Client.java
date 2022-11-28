@@ -37,7 +37,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * </span>
  * <p>
  * <span>
- * <b>Vorherige Versionsbeschreibung:</b><br />
+ * <b>Version 1.0</b><br/>
  * Der Client stellt das Nutzer-Interface für den Chat zur Verfügung.
  * Die Nachrichten vom Server werden mit einem JavaFX-Service empfangen.
  * Die lokalen Eingaben werden jedoch direkt (ohne Threads) an den Server
@@ -216,6 +216,7 @@ public class Client extends Application {
 
     /**
      * Bereinigt die Nachrichten des Clients
+     *
      * @param e ignoriert
      */
     private void cleanup(WorkerStateEvent e) {
@@ -268,6 +269,16 @@ public class Client extends Application {
     }
 
     /**
+     * Gibt eine Error-Message aus,
+     * wenn die Nachricht nicht gesendet werden kann
+     *
+     * @param message Message des Clients
+     */
+    private void offerMessage(Message message) {
+        if (!messages.offer(message)) System.err.println("Message could not have been send");
+    }
+
+    /**
      * Die vom Service ausgeführte Task.
      * Sie nimmt vom Server Nachrichten entgegen,
      * gibt diese aus und reagiert gegebenenfalls.
@@ -310,15 +321,5 @@ public class Client extends Application {
             }
             return null;
         }
-    }
-
-    /**
-     * Gibt eine Error-Message aus,
-     * wenn die Nachricht nicht gesendet werden kann
-     *
-     * @param message Message des Clients
-     */
-    private void offerMessage(Message message) {
-        if (!messages.offer(message)) System.err.println("Message could not have been send");
     }
 }

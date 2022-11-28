@@ -5,11 +5,14 @@ import org.apache.catalina.LifecycleException;
 
 import java.io.IOException;
 
+/**
+ * Hauptklasse zum Starten des Servers
+ */
 public class Main {
     /**
      * Ruft die Start-Methode des Servers auf
      *
-     * @param args ignoriert
+     * @param args nicht benutzt
      * @throws LifecycleException ignoriert
      * @throws IOException ignoriert
      */

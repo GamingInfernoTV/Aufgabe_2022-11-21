@@ -13,9 +13,15 @@ import java.nio.file.Paths;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * Utility-Klasse zum Starten des Servers
+ */
 public class Server {
     private static final int PORT = 8080;
 
+    /**
+     * Privater Konstruktor; da eine Instanziierung nicht vonnöten ist
+     */
     private Server() {
     }
 
